@@ -27,3 +27,42 @@
 <li><p>OpenJDK 11 installed. See the section <a href="https://github.com/dogiparthy85/Java-Ubuntu20.04">Installing the Default JRE/JDK</a> <a href="https://github.com/dogiparthy85/Java-Ubuntu20.04">How To Install Java with Apt on Ubuntu 20.04</a> to set this up. </p></li>
 <li><p>Nginx installed on your server, which we will configure later in this guide as a reverse proxy for Kibana. Follow our guide on <a href="https://github.com/dogiparthy85/Nginx-on-Ubuntu-20.04">How to Install Nginx on Ubuntu 20.04</a> to set this up.</p></li>
 </ul>
+
+<p>Additionally, because the Elastic Stack is used to access valuable information about your server that you would not want unauthorized users to access, it’s important that you keep your server secure by installing a TLS/SSL certificate. This is optional but <strong>strongly encouraged</strong>.</p>
+
+<p>However, because you will ultimately make changes to your Nginx server block over the course of this guide, it would likely make more sense for you to complete the Let’s Encrypt setup.</p>
+
+<h2 id="step-1-—-installing-and-configuring-elasticsearch">Step 1 — Installing and Configuring Elasticsearch</h2>
+
+<p>The Elasticsearch components are not available in Ubuntu’s default package repositories. They can, however, be installed with APT after adding Elastic’s package source list.</p>
+
+<p>All of the packages are signed with the Elasticsearch signing key in order to protect your system from package spoofing. Packages which have been authenticated using the key will be considered trusted by your package manager. In this step, you will import the Elasticsearch public GPG key and add the Elastic package source list in order to install Elasticsearch.</p>
+
+<p>To begin, use cURL, the command line tool for transferring data with URLs, to import the Elasticsearch public GPG key into APT.  Note that we are using the arguments -fsSL to silence all progress and possible errors (except for a server failure) and to allow cURL to make a request on a new location if redirected.  Pipe the output of the cURL command into the apt-key program, which adds the public GPG key to APT. </p>
+
+<pre class="code-pre command prefixed"><code><ul class="prefixed"><li class="line" data-prefix="$">curl -fsSL https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
+</li></ul></code></pre>
+
+<p>Next, add the Elastic source list to the <code>sources.list.d</code> directory, where APT will search for new sources:</p>
+
+<pre class="code-pre command prefixed"><code><ul class="prefixed"><li class="line" data-prefix="$">echo "deb https://artifacts.elastic.co/packages/7.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-7.x.list
+</li></ul></code></pre>
+
+<p>Next, update your package lists so APT will read the new Elastic source:</p>
+
+<pre class="code-pre command prefixed"><code><ul class="prefixed"><li class="line" data-prefix="$">sudo apt update
+</li></ul></code></pre>
+
+<p>Then install Elasticsearch with this command:</p>
+
+<pre class="code-pre command prefixed"><code><ul class="prefixed"><li class="line" data-prefix="$">sudo apt install elasticsearch
+</li></ul></code></pre>
+
+<p>Elasticsearch is now installed and ready to be configured. Use your preferred text editor to edit Elasticsearch’s main configuration file, <code>elasticsearch.yml</code>. Here, we’ll use <code>nano</code>:</p>
+
+<pre class="code-pre command prefixed"><code><ul class="prefixed"><li class="line" data-prefix="$">sudo nano /etc/elasticsearch/elasticsearch.yml
+</li></ul></code></pre>
+
+
+
+
