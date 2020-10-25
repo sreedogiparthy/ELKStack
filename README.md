@@ -140,7 +140,10 @@ network.host: <span class="highlight">localhost</span>
 <p>Add the following code block into the file, being sure to update <code><span class="highlight">your_domain</span></code> to match your server’s FQDN or public IP address. This code configures Nginx to direct your server’s HTTP traffic to the Kibana application, which is listening on <code>localhost:5601</code>. Additionally, it configures Nginx to read the <code>htpasswd.users</code> file and require basic authentication.</p>
 
 <p>Note that if you followed the <a href="https://github.com/dogiparthy85/Nginx-on-Ubuntu-20.04">prerequisite Nginx tutorial</a> through to the end, you may have already created this file and populated it with some content. In that case, delete all the existing content in the file before adding the following:</p>
-<div class="code-label " title="/etc/nginx/sites-available/your_domain">/etc/nginx/sites-available/your_domain</div><div class="code-toolbar"><pre class="code-pre  language-nginx"><code class="code-highlight  language-nginx"><span class="token keyword">server</span> <span class="token punctuation">{</span>
+
+
+<div class="code-label " title="/etc/nginx/sites-available/your_domain">/etc/nginx/sites-available/your_domain</div>
+<div class="code-toolbar"><pre class="code-pre  language-nginx"><code class="code-highlight  language-nginx"><span class="token keyword">server</span> <span class="token punctuation">{</span>
     <span class="token keyword">listen</span> <span class="token number">80</span><span class="token punctuation">;</span>
 
     <span class="token keyword">server_name</span> <span class="highlight">your_domain</span><span class="token punctuation">;</span>
@@ -156,7 +159,8 @@ network.host: <span class="highlight">localhost</span>
         <span class="token keyword">proxy_set_header</span> Host <span class="token variable">$host</span><span class="token punctuation">;</span>
         <span class="token keyword">proxy_cache_bypass</span> <span class="token variable">$http_upgrade</span><span class="token punctuation">;</span>
     <span class="token punctuation">}</span>
-<span class="token punctuation">}</span></code></pre><div class="toolbar"><div class="toolbar-item"><button>Copy</button></div></div></div>
+<span class="token punctuation">}</span></code></pre><div class="toolbar"><div class="toolbar-item"><button>Copy</button></div></div></div>  
+
 <p>When you’re finished, save and close the file.</p>
 
 <p>Next, enable the new configuration by creating a symbolic link to the <code>sites-enabled</code> directory. If you already created a server block file with the same name in the Nginx prerequisite, you do not need to run this command:</p>
