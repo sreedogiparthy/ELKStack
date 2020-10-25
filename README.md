@@ -201,3 +201,201 @@ network.host: <span class="highlight">localhost</span>
 
 
 
+<p class="growable"><img src="https://github.com/dogiparthy85/ELKStack/blob/main/logstash-pipeline.jpg" alt="Logstash pipeline"></p>
+
+<p>Create a configuration file called <code>02-beats-input.conf</code> where you will set up your Filebeat input:</p>
+<pre class="code-pre command prefixed"><code><ul class="prefixed"><li class="line" data-prefix="$">sudo nano /etc/logstash/conf.d/02-beats-input.conf
+</li></ul></code></pre>
+<p>Insert the following <code>input</code> configuration. This specifies a <code>beats</code> input that will listen on TCP port <code>5044</code>.</p>
+<div class="code-label " title="/etc/logstash/conf.d/02-beats-input.conf">/etc/logstash/conf.d/02-beats-input.conf</div><div class="code-toolbar"><pre class="code-pre  language-html"><code class="code-highlight  language-html">input {
+  beats {
+    port =&gt; 5044
+  }
+}</code></pre><div class="toolbar"><div class="toolbar-item"><button>Copy</button></div></div></div>
+<p>Save and close the file. </p>
+
+<p>Next, create a configuration file called <code>30-elasticsearch-output.conf</code>:</p>
+<pre class="code-pre command prefixed"><code><ul class="prefixed"><li class="line" data-prefix="$">sudo nano /etc/logstash/conf.d/30-elasticsearch-output.conf
+</li></ul></code></pre>
+<p>Insert the following <code>output</code> configuration. Essentially, this output configures Logstash to store the Beats data in Elasticsearch, which is running at <code>localhost:9200</code>, in an index named after the Beat used. The Beat used in this tutorial is Filebeat:</p>
+<div class="code-label " title="/etc/logstash/conf.d/30-elasticsearch-output.conf">/etc/logstash/conf.d/30-elasticsearch-output.conf</div><div class="code-toolbar"><pre class="code-pre  language-html"><code class="code-highlight  language-html">output {
+  if [@metadata][pipeline] {
+    elasticsearch {
+    hosts =&gt; ["localhost:9200"]
+    manage_template =&gt; false
+    index =&gt; "%{[@metadata][beat]}-%{[@metadata][version]}-%{+YYYY.MM.dd}"
+    pipeline =&gt; "%{[@metadata][pipeline]}"
+    }
+  } else {
+    elasticsearch {
+    hosts =&gt; ["localhost:9200"]
+    manage_template =&gt; false
+    index =&gt; "%{[@metadata][beat]}-%{[@metadata][version]}-%{+YYYY.MM.dd}"
+    }
+  }
+}</code></pre><div class="toolbar"><div class="toolbar-item"><button>Copy</button></div></div></div>
+<p>Save and close the file.</p>
+
+<p>Test your Logstash configuration with this command:</p>
+<pre class="code-pre command prefixed"><code><ul class="prefixed"><li class="line" data-prefix="$">sudo -u logstash /usr/share/logstash/bin/logstash --path.settings /etc/logstash -t
+</li></ul></code></pre>
+<p>If there are no syntax errors, your output will display <code>Config Validation Result: OK. Exiting Logstash</code> after a few seconds. If you don’t see this in your output, check for any errors noted in your output and update your configuration to correct them. Note that you will receive warnings from OpenJDK, but they should not cause any problems and can be ignored. </p>
+
+<p>If your configuration test is successful, start and enable Logstash to put the configuration changes into effect:</p>
+<pre class="code-pre command prefixed"><code><ul class="prefixed"><li class="line" data-prefix="$">sudo systemctl start logstash
+</li><li class="line" data-prefix="$">sudo systemctl enable logstash
+</li></ul></code></pre>
+<p>Now that Logstash is running correctly and is fully configured, let’s install Filebeat.</p>
+
+<a name="step-4-—-installing-and-configuring-filebeat" data-unique="step-4-—-installing-and-configuring-filebeat"></a><a name="step-4-—-installing-and-configuring-filebeat" data-unique="step-4-—-installing-and-configuring-filebeat"></a><h2 id="step-4-—-installing-and-configuring-filebeat">Step 4 — Installing and Configuring Filebeat</h2>
+
+<p>The Elastic Stack uses several lightweight data shippers called Beats to collect data from various sources and transport them to Logstash or Elasticsearch. Here are the Beats that are currently available from Elastic:</p>
+
+<ul>
+<li><a href="https://www.elastic.co/products/beats/filebeat">Filebeat</a>: collects and ships log files.</li>
+<li><a href="https://www.elastic.co/products/beats/metricbeat">Metricbeat</a>: collects metrics from your systems and services.</li>
+<li><a href="https://www.elastic.co/products/beats/packetbeat">Packetbeat</a>: collects and analyzes network data.</li>
+<li><a href="https://www.elastic.co/products/beats/winlogbeat">Winlogbeat</a>: collects Windows event logs.</li>
+<li><a href="https://www.elastic.co/products/beats/auditbeat">Auditbeat</a>: collects Linux audit framework data and monitors file integrity.</li>
+<li><a href="https://www.elastic.co/products/beats/heartbeat">Heartbeat</a>: monitors services for their availability with active probing.</li>
+</ul>
+
+<p>In this tutorial we will use Filebeat to forward local logs to our Elastic Stack.</p>
+
+<p>Install Filebeat using <code>apt</code>:</p>
+<pre class="code-pre command prefixed"><code><ul class="prefixed"><li class="line" data-prefix="$">sudo apt install filebeat
+</li></ul></code></pre>
+<p>Next, configure Filebeat to connect to Logstash. Here, we will modify the example configuration file that comes with Filebeat.</p>
+
+<p>Open the Filebeat configuration file:</p>
+<pre class="code-pre command prefixed"><code><ul class="prefixed"><li class="line" data-prefix="$">sudo nano /etc/filebeat/filebeat.yml
+</li></ul></code></pre>
+<p><span class="note"><strong>Note:</strong> As with Elasticsearch, Filebeat’s configuration file is in YAML format. This means that proper indentation is crucial, so be sure to use the same number of spaces that are indicated in these instructions.<br></span></p>
+
+<p>Filebeat supports numerous outputs, but you’ll usually only send events directly to Elasticsearch or to Logstash for additional processing. In this tutorial, we’ll use Logstash to perform additional processing on the data collected by Filebeat. Filebeat will not need to send any data directly to Elasticsearch, so let’s disable that output. To do so, find the <code>output.elasticsearch</code> section and comment out the following lines by preceding them with a <code>#</code>:</p>
+<div class="code-label " title="/etc/filebeat/filebeat.yml">/etc/filebeat/filebeat.yml</div><pre class="code-pre "><code>...
+<span class="highlight">#</span>output.elasticsearch:
+  # Array of hosts to connect to.
+  <span class="highlight">#</span>hosts: ["localhost:9200"]
+...
+</code></pre>
+<p>Then, configure the <code>output.logstash</code> section. Uncomment the lines <code>output.logstash:</code> and <code>hosts: ["localhost:5044"]</code> by removing the <code>#</code>. This will configure Filebeat to connect to Logstash on your Elastic Stack server at port <code>5044</code>, the port for which we specified a Logstash input earlier:</p>
+<div class="code-label " title="/etc/filebeat/filebeat.yml">/etc/filebeat/filebeat.yml</div><pre class="code-pre "><code>output.logstash:
+  # The Logstash hosts
+  hosts: ["localhost:5044"]
+</code></pre>
+<p>Save and close the file.</p>
+
+<p>The functionality of Filebeat can be extended with <a href="https://www.elastic.co/guide/en/beats/filebeat/7.6/filebeat-modules.html">Filebeat modules</a>. In this tutorial we will use the <a href="https://www.elastic.co/guide/en/beats/filebeat/7.6/filebeat-module-system.html">system</a> module, which collects and parses logs created by the system logging service of common Linux distributions.</p>
+
+<p>Let’s enable it:</p>
+<pre class="code-pre command prefixed"><code><ul class="prefixed"><li class="line" data-prefix="$">sudo filebeat modules enable system
+</li></ul></code></pre>
+<p>You can see a list of enabled and disabled modules by running:</p>
+<pre class="code-pre command prefixed"><code><ul class="prefixed"><li class="line" data-prefix="$">sudo filebeat modules list
+</li></ul></code></pre>
+<p>You will see a list similar to the following:</p>
+<pre class="code-pre "><code><div class="secondary-code-label " title="Output">Output</div>Enabled:
+system
+
+Disabled:
+apache2
+auditd
+elasticsearch
+icinga
+iis
+kafka
+kibana
+logstash
+mongodb
+mysql
+nginx
+osquery
+postgresql
+redis
+traefik
+...
+</code></pre>
+<p>By default, Filebeat is configured to use default paths for the syslog and authorization logs. In the case of this tutorial, you do not need to change anything in the configuration. You can see the parameters of the module in the  <code>/etc/filebeat/modules.d/system.yml</code> configuration file.</p>
+
+<p>Next, we need to set up the Filebeat ingest pipelines, which parse the log data before sending it through logstash to Elasticsearch. To load the ingest pipeline for the system module, enter the following command: </p>
+<pre class="code-pre command prefixed"><code><ul class="prefixed"><li class="line" data-prefix="$">sudo filebeat setup --pipelines --modules system
+</li></ul></code></pre>
+<p>Next, load the index template into Elasticsearch. An <a href="https://www.elastic.co/blog/what-is-an-elasticsearch-index"><em>Elasticsearch index</em></a> is a collection of documents that have similar characteristics. Indexes are identified with a name, which is used to refer to the index when performing various operations within it. The index template will be automatically applied when a new index is created.</p>
+
+<p>To load the template, use the following command:</p>
+<pre class="code-pre command prefixed"><code><ul class="prefixed"><li class="line" data-prefix="$">sudo filebeat setup --index-management -E output.logstash.enabled=false -E 'output.elasticsearch.hosts=["localhost:9200"]'
+</li></ul></code></pre><pre class="code-pre "><code><div class="secondary-code-label " title="Output">Output</div>Index setup finished.
+</code></pre>
+<p>Filebeat comes packaged with sample Kibana dashboards that allow you to visualize Filebeat data in Kibana. Before you can use the dashboards, you need to create the index pattern and load the dashboards into Kibana.</p>
+
+<p>As the dashboards load, Filebeat connects to Elasticsearch to check version information. To load dashboards when Logstash is enabled, you need to disable the Logstash output and enable Elasticsearch output:</p>
+<pre class="code-pre command prefixed"><code><ul class="prefixed"><li class="line" data-prefix="$">sudo filebeat setup -E output.logstash.enabled=false -E output.elasticsearch.hosts=['localhost:9200'] -E setup.kibana.host=localhost:5601
+</li></ul></code></pre>
+<p>You should receive output similar to this:</p>
+<pre class="code-pre "><code><div class="secondary-code-label " title="Output">Output</div>Overwriting ILM policy is disabled. Set `setup.ilm.overwrite:true` for enabling.
+
+Index setup finished.
+Loading dashboards (Kibana must be running and reachable)
+Loaded dashboards
+Setting up ML using setup --machine-learning is going to be removed in 8.0.0. Please use the ML app instead.
+See more: https://www.elastic.co/guide/en/elastic-stack-overview/current/xpack-ml.html
+Loaded machine learning job configurations
+Loaded Ingest pipelines
+</code></pre>
+<p>Now you can start and enable Filebeat:</p>
+<pre class="code-pre command prefixed"><code><ul class="prefixed"><li class="line" data-prefix="$">sudo systemctl start filebeat
+</li><li class="line" data-prefix="$">sudo systemctl enable filebeat
+</li></ul></code></pre>
+<p>If you’ve set up your Elastic Stack correctly, Filebeat will begin shipping your syslog and authorization logs to Logstash, which will then load that data into Elasticsearch.</p>
+
+<p>To verify that Elasticsearch is indeed receiving this data, query the Filebeat index with this command:</p>
+<pre class="code-pre command prefixed"><code><ul class="prefixed"><li class="line" data-prefix="$">curl -XGET 'http://localhost:9200/filebeat-*/_search?pretty'
+</li></ul></code></pre>
+<p>You should receive output similar to this:</p>
+<pre class="code-pre "><code><div class="secondary-code-label " title="Output">Output</div>...
+{
+{
+  "took" : 4,
+  "timed_out" : false,
+  "_shards" : {
+    "total" : 2,
+    "successful" : 2,
+    "skipped" : 0,
+    "failed" : 0
+  },
+  "hits" : {
+    "total" : {
+      "value" : 4040,
+      "relation" : "eq"
+    },
+    "max_score" : 1.0,
+    "hits" : [
+      {
+        "_index" : "filebeat-7.7.1-2020.06.04",
+        "_type" : "_doc",
+        "_id" : "FiZLgXIB75I8Lxc9ewIH",
+        "_score" : 1.0,
+        "_source" : {
+          "cloud" : {
+            "provider" : "digitalocean",
+            "instance" : {
+              "id" : "194878454"
+            },
+            "region" : "nyc1"
+          },
+          "@timestamp" : "2020-06-04T21:45:03.995Z",
+          "agent" : {
+            "version" : "7.7.1",
+            "type" : "filebeat",
+            "ephemeral_id" : "cbcefb9a-8d15-4ce4-bad4-962a80371ec0",
+            "hostname" : "june-ubuntu-20-04-elasticstack",
+            "id" : "fbd5956f-12ab-4227-9782-f8f1a19b7f32"
+          },
+
+
+...
+</code></pre>
+<p>If your output shows 0 total hits, Elasticsearch is not loading any logs under the index you searched for, and you will need to review your setup for errors. If you received the expected output, continue to the next step, in which we will see how to navigate through some of Kibana’s dashboards.</p>
+
+
