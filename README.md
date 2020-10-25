@@ -63,6 +63,66 @@
 <pre class="code-pre command prefixed"><code><ul class="prefixed"><li class="line" data-prefix="$">sudo nano /etc/elasticsearch/elasticsearch.yml
 </li></ul></code></pre>
 
+<p><span class="note"><strong>Note:</strong> Elasticsearch’s configuration file is in YAML format, which means that we need to maintain the indentation format. Be sure that you do not add any extra spaces as you edit this file.<br></span></p>
+
+<p>The <code>elasticsearch.yml</code> file provides configuration options for your cluster, node, paths, memory, network, discovery, and gateway. Most of these options are preconfigured in the file but you can change them according to your needs. For the purposes of our demonstration of a single-server configuration, we will only adjust the settings for the network host. </p>
+
+<p>Elasticsearch listens for traffic from everywhere on port <code>9200</code>. You will want to restrict outside access to your Elasticsearch instance to prevent outsiders from reading your data or shutting down your Elasticsearch cluster through its <a href="https://en.wikipedia.org/wiki/Representational_state_transfer">REST API</a>. To restrict access and therefore increase security, find the line that specifies <code>network.host</code>, uncomment it, and replace its value with <code>localhost</code> like this:</p>
+<div class="code-label " title="/etc/elasticsearch/elasticsearch.yml">/etc/elasticsearch/elasticsearch.yml</div><pre class="code-pre "><code>. . .
+# ---------------------------------- Network -----------------------------------
+#
+# Set the bind address to a specific IP (IPv4 or IPv6):
+#
+network.host: <span class="highlight">localhost</span>
+. . .
+</code></pre>
+<p>We have specified <code>localhost</code> so that Elasticsearch listens on all interfaces and bound IPs. If you want it to listen only on a specific interface, you can specify its IP in place of <code>localhost</code>. Save and close <code>elasticsearch.yml</code>. If you’re using <code>nano</code>, you can do so by pressing <code>CTRL+X</code>, followed by <code>Y</code> and then <code>ENTER</code> . </p>
+
+<p>These are the minimum settings you can start with in order to use Elasticsearch. Now you can start Elasticsearch for the first time.</p>
+
+<p>Start the Elasticsearch service with <code>systemctl</code>. Give Elasticsearch a few moments to start up. Otherwise, you may get errors about not being able to connect.</p>
+<pre class="code-pre command prefixed"><code><ul class="prefixed"><li class="line" data-prefix="$">sudo systemctl start elasticsearch
+</li></ul></code></pre>
+<p>Next, run the following command to enable Elasticsearch to start up every time your server boots:</p>
+<pre class="code-pre command prefixed"><code><ul class="prefixed"><li class="line" data-prefix="$">sudo systemctl enable elasticsearch
+</li></ul></code></pre>
+<p>You can test whether your Elasticsearch service is running by sending an HTTP request:</p>
+<pre class="code-pre command prefixed"><code><ul class="prefixed"><li class="line" data-prefix="$">curl -X GET "localhost:9200"
+</li></ul></code></pre>
+<p>You will see a response showing some basic information about your local node, similar to this:</p>
+<pre class="code-pre "><code><div class="secondary-code-label " title="Output">Output</div>{
+  "name" : "Elasticsearch",
+  "cluster_name" : "elasticsearch",
+  "cluster_uuid" : "qqhFHPigQ9e2lk-a7AvLNQ",
+  "version" : {
+    "number" : "7.7.1",
+    "build_flavor" : "default",
+    "build_type" : "deb",
+    "build_hash" : "ef48eb35cf30adf4db14086e8aabd07ef6fb113f",
+    "build_date" : "2020-03-26T06:34:37.794943Z",
+    "build_snapshot" : false,
+    "lucene_version" : "8.5.1",
+    "minimum_wire_compatibility_version" : "6.8.0",
+    "minimum_index_compatibility_version" : "6.0.0-beta1"
+  },
+  "tagline" : "You Know, for Search"
+}
+
+</code></pre>
+<p>Now that Elasticsearch is up and running, let’s install Kibana, the next component of the Elastic Stack.</p>
+
+<a name="step-2-—-installing-and-configuring-the-kibana-dashboard" data-unique="step-2-—-installing-and-configuring-the-kibana-dashboard"></a><a name="step-2-—-installing-and-configuring-the-kibana-dashboard" data-unique="step-2-—-installing-and-configuring-the-kibana-dashboard"></a><h2 id="step-2-—-installing-and-configuring-the-kibana-dashboard">Step 2 — Installing and Configuring the Kibana Dashboard</h2>
+
+<p>According to the <a href="https://www.elastic.co/guide/en/elastic-stack/current/installing-elastic-stack.html">official documentation</a>, you should install Kibana only after installing Elasticsearch. Installing in this order ensures that the components each product depends on are correctly in place.</p>
+
+<p>Because you’ve already added the Elastic package source in the previous step, you can just install the remaining components of the Elastic Stack using <code>apt</code>:</p>
+<pre class="code-pre command prefixed"><code><ul class="prefixed"><li class="line" data-prefix="$">sudo apt install kibana
+</li></ul></code></pre>
+<p>Then enable and start the Kibana service:</p>
+<pre class="code-pre command prefixed"><code><ul class="prefixed"><li class="line" data-prefix="$">sudo systemctl enable kibana
+</li><li class="line" data-prefix="$">sudo systemctl start kibana
+</li></ul></code></pre>
+
 
 
 
