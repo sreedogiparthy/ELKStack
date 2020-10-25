@@ -123,6 +123,79 @@ network.host: <span class="highlight">localhost</span>
 </li><li class="line" data-prefix="$">sudo systemctl start kibana
 </li></ul></code></pre>
 
+<p>Because Kibana is configured to only listen on <code>localhost</code>, we must set up a reverse proxy to allow external access to it. We will use Nginx for this purpose, which should already be installed on your server.</p>
+
+<p>First, use the <code>openssl</code> command to create an administrative Kibana user which you’ll use to access the Kibana web interface. As an example we will name this account <code><span class="highlight">kibanaadmin</span></code>, but to ensure greater security we recommend that you choose a non-standard name for your user that would be difficult to guess.</p>
+
+<p>The following command will create the administrative Kibana user and password, and store them in the <code>htpasswd.users</code> file. You will configure Nginx to require this username and password and read this file momentarily:</p>
+<pre class="code-pre command prefixed"><code><ul class="prefixed"><li class="line" data-prefix="$">echo "<span class="highlight">kibanaadmin</span>:`openssl passwd -apr1`" | sudo tee -a /etc/nginx/htpasswd.users
+</li></ul></code></pre>
+<p>Enter and confirm a password at the prompt. Remember or take note of this login, as you will need it to access the Kibana web interface.</p>
+
+<p>Next, we will create an Nginx server block file. As an example, we will refer to this file as <code><span class="highlight">your_domain</span></code>, although you may find it helpful to give yours a more descriptive name. For instance, if you have a FQDN and DNS records set up for this server, you could name this file after your FQDN.</p>
+
+<p>Using nano or your preferred text editor, create the Nginx server block file: </p>
+<pre class="code-pre command prefixed"><code><ul class="prefixed"><li class="line" data-prefix="$">sudo nano /etc/nginx/sites-available/<span class="highlight">your_domain</span>
+</li></ul></code></pre>
+<p>Add the following code block into the file, being sure to update <code><span class="highlight">your_domain</span></code> to match your server’s FQDN or public IP address. This code configures Nginx to direct your server’s HTTP traffic to the Kibana application, which is listening on <code>localhost:5601</code>. Additionally, it configures Nginx to read the <code>htpasswd.users</code> file and require basic authentication.</p>
+
+<p>Note that if you followed the <a href="https://github.com/dogiparthy85/Nginx-on-Ubuntu-20.04">prerequisite Nginx tutorial</a> through to the end, you may have already created this file and populated it with some content. In that case, delete all the existing content in the file before adding the following:</p>
+<div class="code-label " title="/etc/nginx/sites-available/your_domain">/etc/nginx/sites-available/your_domain</div><div class="code-toolbar"><pre class="code-pre  language-nginx"><code class="code-highlight  language-nginx"><span class="token keyword">server</span> <span class="token punctuation">{</span>
+    <span class="token keyword">listen</span> <span class="token number">80</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">server_name</span> <span class="highlight">your_domain</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">auth_basic</span> <span class="token string">"Restricted Access"</span><span class="token punctuation">;</span>
+    <span class="token keyword">auth_basic_user_file</span> <span class="token operator">/</span>etc<span class="token operator">/</span>nginx<span class="token operator">/</span>htpasswd<span class="token punctuation">.</span>users<span class="token punctuation">;</span>
+
+    <span class="token keyword">location</span> <span class="token operator">/</span> <span class="token punctuation">{</span>
+        <span class="token keyword">proxy_pass</span> <span class="token keyword">http</span><span class="token punctuation">:</span><span class="token operator">/</span><span class="token operator">/</span>localhost<span class="token punctuation">:</span><span class="token number">5601</span><span class="token punctuation">;</span>
+        <span class="token keyword">proxy_http_version</span> <span class="token number">1.1</span><span class="token punctuation">;</span>
+        <span class="token keyword">proxy_set_header</span> Upgrade <span class="token variable">$http_upgrade</span><span class="token punctuation">;</span>
+        <span class="token keyword">proxy_set_header</span> Connection <span class="token string">'upgrade'</span><span class="token punctuation">;</span>
+        <span class="token keyword">proxy_set_header</span> Host <span class="token variable">$host</span><span class="token punctuation">;</span>
+        <span class="token keyword">proxy_cache_bypass</span> <span class="token variable">$http_upgrade</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre><div class="toolbar"><div class="toolbar-item"><button>Copy</button></div></div></div>
+<p>When you’re finished, save and close the file.</p>
+
+<p>Next, enable the new configuration by creating a symbolic link to the <code>sites-enabled</code> directory. If you already created a server block file with the same name in the Nginx prerequisite, you do not need to run this command:</p>
+<pre class="code-pre command prefixed"><code><ul class="prefixed"><li class="line" data-prefix="$">sudo ln -s /etc/nginx/sites-available/<span class="highlight">your_domain</span> /etc/nginx/sites-enabled/<span class="highlight">your_domain</span>
+</li></ul></code></pre>
+<p>Then check the configuration for syntax errors:</p>
+<pre class="code-pre command prefixed"><code><ul class="prefixed"><li class="line" data-prefix="$">sudo nginx -t
+</li></ul></code></pre>
+<p>If any errors are reported in your output, go back and double check that the content you placed in your configuration file was added correctly. Once you see <code>syntax is ok</code> in the output, go ahead and restart the Nginx service:</p>
+<pre class="code-pre command prefixed"><code><ul class="prefixed"><li class="line" data-prefix="$">sudo systemctl reload nginx
+</li></ul></code></pre>
+<p>If you followed the initial server setup guide, you should have a UFW firewall enabled. To allow connections to Nginx, we can adjust the rules by typing:</p>
+<pre class="code-pre command prefixed"><code><ul class="prefixed"><li class="line" data-prefix="$">sudo ufw allow 'Nginx Full'
+</li></ul></code></pre>
+<span class="note"><p>
+<strong>Note:</strong> If you followed the prerequisite Nginx tutorial, you may have created a UFW rule allowing the <code>Nginx HTTP</code> profile through the firewall. Because the <code>Nginx Full</code> profile allows both HTTP and HTTPS traffic through the firewall, you can safely delete the rule you created in the prerequisite tutorial. Do so with the following command:</p>
+<pre class="code-pre command prefixed"><code><ul class="prefixed"><li class="line" data-prefix="$">sudo ufw delete allow 'Nginx HTTP'
+</li></ul></code></pre>
+<p></p></span>
+
+<p>Kibana is now accessible via your FQDN or the public IP address of your Elastic Stack server. You can check the Kibana server’s status page by navigating to the following address and entering your login credentials when prompted:</p>
+<pre class="code-pre "><code>http://<span class="highlight">your_domain</span>/status
+</code></pre>
+<p>This status page displays information about the server’s resource usage and lists the installed plugins.</p>
+
+<p class="growable"><img src="https://github.com/dogiparthy85/ELKStack/blob/main/KibanaDashboard.png" alt="|Kibana status page"></p>
+
+<p><span class="note"><strong>Note</strong>: As mentioned in the Prerequisites section, it is recommended that you enable SSL/TLS on your server. You can follow <a href="https://www.digitalocean.com/community/tutorials/how-to-secure-nginx-with-let-s-encrypt-on-ubuntu-20-04">the Let’s Encrypt</a> guide now to obtain a free SSL certificate for Nginx on Ubuntu 20.04. After obtaining your SSL/TLS certificates, you can come back and complete this tutorial.<br></span></p>
+
+<p>Now that the Kibana dashboard is configured, let’s install the next component: Logstash.</p>
+
+<a name="step-3-—-installing-and-configuring-logstash" data-unique="step-3-—-installing-and-configuring-logstash"></a><a name="step-3-—-installing-and-configuring-logstash" data-unique="step-3-—-installing-and-configuring-logstash"></a><h2 id="step-3-—-installing-and-configuring-logstash">Step 3 — Installing and Configuring Logstash</h2>
+
+<p>Although it’s possible for Beats to send data directly to the Elasticsearch database, it is common to use Logstash to process the data. This will allow you more flexibility to collect data from different sources, transform it into a common format, and export it to another database.</p>
+
+<p>Install Logstash with this command:</p>
+<pre class="code-pre command prefixed"><code><ul class="prefixed"><li class="line" data-prefix="$">sudo apt install logstash
+</li></ul></code></pre>
+<p>After installing Logstash, you can move on to configuring it. Logstash’s configuration files reside in the <code>/etc/logstash/conf.d</code> directory. For more information on the configuration syntax, you can check out the <a href="https://www.elastic.co/guide/en/logstash/current/configuration-file-structure.html">configuration reference</a> that Elastic provides. As you configure the file, it’s helpful to think of Logstash as a pipeline which takes in data at one end, processes it in one way or another, and sends it out to its destination (in this case, the destination being Elasticsearch). A Logstash pipeline has two required elements, <code>input</code> and <code>output</code>, and one optional element, <code>filter</code>. The input plugins consume data from a source, the filter plugins process the data, and the output plugins write the data to a destination.</p>
 
 
 
