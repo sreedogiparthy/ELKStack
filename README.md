@@ -141,9 +141,7 @@ network.host: <span class="highlight">localhost</span>
 
 <p>Note that if you followed the <a href="https://github.com/dogiparthy85/Nginx-on-Ubuntu-20.04">prerequisite Nginx tutorial</a> through to the end, you may have already created this file and populated it with some content. In that case, delete all the existing content in the file before adding the following:</p>
 
-
-<div class="code-label " title="/etc/nginx/sites-available/your_domain">/etc/nginx/sites-available/your_domain</div>
-<div class="code-toolbar"><pre class="code-pre  language-nginx"><code class="code-highlight  language-nginx"><span class="token keyword">server</span> <span class="token punctuation">{</span>
+<pre class="code-pre  language-nginx"><code class="code-highlight  language-nginx"><span class="token keyword">server</span> <span class="token punctuation">{</span>
     <span class="token keyword">listen</span> <span class="token number">80</span><span class="token punctuation">;</span>
 
     <span class="token keyword">server_name</span> <span class="highlight">your_domain</span><span class="token punctuation">;</span>
@@ -159,7 +157,7 @@ network.host: <span class="highlight">localhost</span>
         <span class="token keyword">proxy_set_header</span> Host <span class="token variable">$host</span><span class="token punctuation">;</span>
         <span class="token keyword">proxy_cache_bypass</span> <span class="token variable">$http_upgrade</span><span class="token punctuation">;</span>
     <span class="token punctuation">}</span>
-<span class="token punctuation">}</span></code></pre><div class="toolbar"><div class="toolbar-item"><button>Copy</button></div></div></div>  
+<span class="token punctuation">}</span></code></pre>
 
 <p>When you’re finished, save and close the file.</p>
 
