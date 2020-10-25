@@ -401,4 +401,33 @@ Loaded Ingest pipelines
 </code></pre>
 <p>If your output shows 0 total hits, Elasticsearch is not loading any logs under the index you searched for, and you will need to review your setup for errors. If you received the expected output, continue to the next step, in which we will see how to navigate through some of Kibana’s dashboards.</p>
 
+<a name="step-5-—-exploring-kibana-dashboards" data-unique="step-5-—-exploring-kibana-dashboards"></a><a name="step-5-—-exploring-kibana-dashboards" data-unique="step-5-—-exploring-kibana-dashboards"></a><h2 id="step-5-—-exploring-kibana-dashboards">Step 5 — Exploring Kibana Dashboards</h2>
+
+<p>Let’s return to the Kibana web interface that we installed earlier.</p>
+
+<p>In a web browser, go to the FQDN or public IP address of your Elastic Stack server. If your session has been interrupted, you will need to re-enter entering the credentials you defined in Step 2. Once you have logged in, you should receive the Kibana homepage:</p>
+
+<p class="growable"><img src="https://github.com/dogiparthy85/ELKStack/blob/main/kibana-homepage-feature-page.jpg" alt="Kibana Homepage"></p>
+
+<p>Click the <strong>Discover</strong> link in the left-hand navigation bar (you may have to click the the <strong>Expand</strong> icon at the very bottom left to see the navigation menu items). On the <strong>Discover</strong> page, select the predefined <strong>filebeat-</strong>* index pattern to see Filebeat data. By default, this will show you all of the log data over the last 15 minutes. You will see a histogram with log events, and some log messages below:</p>
+
+<p class="growable"><img src=".https://github.com/dogiparthy85/ELKStack/blob/main/Discover-Start.png" alt="Discover page"></p>
+
+<p>Here, you can search and browse through your logs and also customize your dashboard. At this point, though, there won’t be much in there because you are only gathering syslogs from your Elastic Stack server.</p>
+
+<p>Use the left-hand panel to navigate to the <strong>Dashboard</strong> page and search for the <strong>Filebeat System</strong> dashboards. Once there, you can select the sample dashboards that come with Filebeat’s <code>system</code> module.</p>
+
+<p>For example, you can view detailed stats based on your syslog messages:</p>
+
+<p class="growable"><img src="https://github.com/dogiparthy85/ELKStack/blob/main/syslog-messages.png" alt="Syslog Dashboard"></p>
+
+<p>You can also view which users have used the <code>sudo</code> command and when:</p>
+
+<p class="growable"><img src="https://github.com/dogiparthy85/ELKStack/blob/main/kibana-sudo.jpg" alt="Sudo Dashboard"></p>
+
+<p>Kibana has many other features, such as graphing and filtering, so feel free to explore.</p>
+
+<a name="conclusion" data-unique="conclusion"></a><a name="conclusion" data-unique="conclusion"></a><h2 id="conclusion">Conclusion</h2>
+
+<p>In this tutorial, you’ve learned how to install and configure the Elastic Stack to collect and analyze system logs. Remember that you can send just about any type of log or indexed data to Logstash using <a href="https://www.elastic.co/products/beats">Beats</a>, but the data becomes even more useful if it is parsed and structured with a Logstash filter, as this transforms the data into a consistent format that can be read easily by Elasticsearch.</p>
 
