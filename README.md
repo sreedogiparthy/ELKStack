@@ -18,6 +18,9 @@
 
 <p><span class="note"><strong>Note</strong>: When installing the Elastic Stack, you must use the same version across the entire stack. In this tutorial we will install the latest versions of the entire stack which are, at the time of this writing, Elasticsearch 7.9.3, Kibana 7.9.3, Logstash 7.9.3, and Filebeat 7.9.3.<br></span></p>
 
+<p><span class="note"><strong>Note</strong>: Sample use case architecture for monitoring logs from Microservices<br></span></p>
+
+<p class="growable"><img src="https://github.com/dogiparthy85/ELKStack/blob/main/usecase.jpg" alt="Realtime Usecase for Microservices"></p>
 <h2 id="prerequisites">Prerequisites</h2>
 
 <p>To complete this tutorial, you will need the following:</p>
